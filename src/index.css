@@ -1,0 +1,113 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+* {
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 10px !important;
+  line-height: 1.6 !important;
+}
+/* EXCEPTION: Saved project cards keep monospace */
+.saved-project-card,
+.saved-project-card * {
+  font-family: monospace !important;
+}
+
+.message-size,
+.message-size, * {
+  font-size: 9px !important;
+  line-height: -10px !important;
+}
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Smooth transitions for windows */
+.window-smooth-transition {
+  transition: all 0.1s ease-out;
+}
+
+.window-resizing {
+  transition: none;
+}
+
+.app-content-smooth {
+  transition: all 0.1s ease-out;
+}
+
+/* CSS for range input styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #8B7355;
+  cursor: pointer;
+  border: 2px solid #E5DCC8;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #8B7355;
+  cursor: pointer;
+  border: 2px solid #E5DCC8;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  background: #6B553A;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  background: #6B553A;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #F5E6D3;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #D4A574;
+  border-radius: 10px;
+  border: 2px solid #F5E6D3;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #C19A6B;
+}
