@@ -6,7 +6,7 @@ function LoadingScreen({ onLoadComplete }) {
   const [messageIndex, setMessageIndex] = useState(0);
 
   const messages = [
-    "pleasee waaitt almost there",
+    "pleasee waaitt almost there!!",
     "gah dont leave almost done",
     "loading assets so we dont have any issues later~"
   ];
@@ -22,103 +22,63 @@ function LoadingScreen({ onLoadComplete }) {
 
   useEffect(() => {
     const loadAssets = async () => {
-      // Define all assets to preload
-      const assets = {
-        images: [
-          '/corkboard/corkboard.jpg',
-          '/corkboard/boardpin.png',
-          '/corkboard/boardpin2.png',
-          // Polaroids
-          ...Array.from({ length: 10 }, (_, i) => `/corkboard/polaroids/${i + 1}.png`),
-          // Stickers
-          '/corkboard/sticker1.png', '/corkboard/sticker2.png', '/corkboard/sticker3.png',
-          '/corkboard/sticker4.png', '/corkboard/sticker5.png', '/corkboard/sticker6.png',
-          '/corkboard/sticker7.png', '/corkboard/sticker8.png', '/corkboard/sticker9.png',
-          '/corkboard/sticker10.png', '/corkboard/sticker11.png', '/corkboard/sticker12.png',
-          '/corkboard/sticker13.png', '/corkboard/sticker14.png', '/corkboard/sticker15.png',
-          '/corkboard/sticker16.png', '/corkboard/sticker17.png', '/corkboard/sticker18.png',
-          '/corkboard/sticker19.png', '/corkboard/sticker20.png', '/corkboard/sticker21.png',
-          '/corkboard/sticker22.png', '/corkboard/sticker23.png', '/corkboard/sticker24.png',
-          '/corkboard/sticker25.png', '/corkboard/sticker26.png', '/corkboard/sticker27.png',
-          '/corkboard/sticker28.png', '/corkboard/sticker29.png', '/corkboard/sticker30.png',
-          '/corkboard/sticker31.jpg', '/corkboard/sticker32.jpg', '/corkboard/sticker33.jpg',
-          '/corkboard/sticker34.jpg', '/corkboard/sticker35.jpg', '/corkboard/sticker36.jpg',
-          // Buttons
-          '/corkboard/buttons/PANEL_SMOL.png', '/corkboard/buttons/PANEL_LONG.png',
-          '/corkboard/buttons/PANEL_LONG2.png', '/corkboard/buttons/SCROLL.png',
-          '/corkboard/buttons/HAMBURGER_BTN.png', '/corkboard/buttons/SAVELOAD_BTN.png',
-          '/corkboard/buttons/NEWBOARD_BTN.png', '/corkboard/buttons/POLAROIDS_BTN.png',
-          '/corkboard/buttons/STICKERS_BTN.png', '/corkboard/buttons/UPLOAD_BTN.png',
-          '/corkboard/buttons/STICKYNOTE_BTN.png', '/corkboard/buttons/EXPORT_BTN.png',
-          '/corkboard/buttons/SETTINGS_BTN.png', '/corkboard/buttons/CLOSE_BTN.png',
-          '/corkboard/buttons/YES_BTN.png', '/corkboard/buttons/NO_BTN.png',
-          '/corkboard/buttons/YES2_BTN.png', '/corkboard/buttons/NO2_BTN.png',
-          '/corkboard/buttons/DONE_BTN.png', '/corkboard/buttons/CANCEL_BTN.png',
-          '/corkboard/buttons/SAVEFIRST_BTN.png', '/corkboard/buttons/NAH_BTN.png',
-          '/corkboard/buttons/OPEN_BTN.png', '/corkboard/buttons/WAIT_BTN.png',
-          '/corkboard/buttons/YAY_BTN.png', '/corkboard/buttons/LOAD_BTN.png',
-          '/corkboard/buttons/DELETE_BTN.png', '/corkboard/buttons/X.png',
-          '/corkboard/buttons/BIG_BTN.png', '/corkboard/buttons/SAVEFIRST2_BTN.png',
-          '/corkboard/buttons/CANCEL2_BTN.png', '/corkboard/buttons/UNMUTE_BTN.png',
-          '/corkboard/buttons/MUTE_BTN.png', '/corkboard/buttons/SHARE_BTN.png'
-        ],
-        audio: [
-          '/corkboard/audio/click.mp3',
-          '/corkboard/audio/paper.mp3',
-          '/corkboard/audio/music.mp3'
-        ]
-      };
+      // Only load essential assets - let others load lazily
+      const criticalAssets = [
+        '/corkboard/corkboard.jpg',
+        '/corkboard/boardpin.png',
+        '/corkboard/boardpin2.png',
+        '/corkboard/buttons/PANEL_SMOL.png',
+        '/corkboard/buttons/HAMBURGER_BTN.png',
+        '/corkboard/buttons/SAVELOAD_BTN.png',
+        '/corkboard/buttons/NEWBOARD_BTN.png',
+        '/corkboard/buttons/POLAROIDS_BTN.png',
+        '/corkboard/buttons/STICKERS_BTN.png',
+        '/corkboard/buttons/UPLOAD_BTN.png',
+        '/corkboard/buttons/STICKYNOTE_BTN.png',
+        '/corkboard/buttons/EXPORT_BTN.png',
+        '/corkboard/buttons/SETTINGS_BTN.png'
+      ];
 
-      const totalAssets = assets.images.length + assets.audio.length;
+      const totalAssets = criticalAssets.length;
       let loadedCount = 0;
 
-      // Load images
-      const imagePromises = assets.images.map((src) => {
+      const loadPromises = criticalAssets.map((src) => {
         return new Promise((resolve) => {
           const img = new Image();
+          
+          const handleLoad = () => {
+            loadedCount++;
+            const progress = Math.round((loadedCount / totalAssets) * 100);
+            setLoadingProgress(progress);
+            resolve();
+          };
+          
+          // Set timeout to prevent infinite loading
+          const timeout = setTimeout(() => {
+            handleLoad();
+          }, 3000);
+          
           img.onload = () => {
-            loadedCount++;
-            const progress = Math.round((loadedCount / totalAssets) * 100);
-            setLoadingProgress(progress);
-            resolve();
+            clearTimeout(timeout);
+            handleLoad();
           };
+          
           img.onerror = () => {
-            loadedCount++;
-            const progress = Math.round((loadedCount / totalAssets) * 100);
-            setLoadingProgress(progress);
-            resolve();
+            clearTimeout(timeout);
+            handleLoad();
           };
+          
           img.src = src;
         });
       });
 
-      // Load audio
-      const audioPromises = assets.audio.map((src) => {
-        return new Promise((resolve) => {
-          const audio = new Audio();
-          audio.oncanplaythrough = () => {
-            loadedCount++;
-            const progress = Math.round((loadedCount / totalAssets) * 100);
-            setLoadingProgress(progress);
-            resolve();
-          };
-          audio.onerror = () => {
-            loadedCount++;
-            const progress = Math.round((loadedCount / totalAssets) * 100);
-            setLoadingProgress(progress);
-            resolve();
-          };
-          audio.src = src;
-        });
-      });
-
-      await Promise.all([...imagePromises, ...audioPromises]);
+      await Promise.all(loadPromises);
 
       setLoadingProgress(100);
       
       setTimeout(() => {
         onLoadComplete();
-      }, 500);
+      }, 300);
     };
 
     loadAssets();
