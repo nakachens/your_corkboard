@@ -114,7 +114,7 @@ function LoadingScreen({ onLoadComplete }) {
             
             const timeout = setTimeout(() => {
               handleLoad();
-            }, isMobile ? 2000 : 4000);
+            }, isMobile ? 2000 : 8000);
             
             audio.oncanplaythrough = () => {
               clearTimeout(timeout);
@@ -140,7 +140,7 @@ function LoadingScreen({ onLoadComplete }) {
             
             const timeout = setTimeout(() => {
               handleLoad();
-            }, isMobile ? 2000 : 4000);
+            }, isMobile ? 2000 : 8000);
             
             img.onload = () => {
               clearTimeout(timeout);
@@ -152,7 +152,13 @@ function LoadingScreen({ onLoadComplete }) {
               handleLoad();
             };
             
+            // Force immediate load
             img.src = src;
+            
+            // Force browser to decode image immediately (desktop only)
+            if (!isMobile && img.decode) {
+              img.decode().catch(() => {});
+            }
           }
         });
       });
@@ -161,11 +167,11 @@ function LoadingScreen({ onLoadComplete }) {
 
       setLoadingProgress(100);
       
-      // Desktop: wait longer to ensure assets are fully cached
+      // Desktop: Wait extra time to ensure browser fully caches everything
       // Mobile: quick transition
       setTimeout(() => {
         onLoadComplete();
-      }, isMobile ? 300 : 1000);
+      }, isMobile ? 300 : 2000);
     };
 
     loadAssets();
