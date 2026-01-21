@@ -6,13 +6,12 @@ function LoadingScreen({ onLoadComplete }) {
   const [messageIndex, setMessageIndex] = useState(0);
 
   const messages = [
-    "pleasee waaitt almost there",
-    "gah dont leave almost done",
+    "pleasee waaitt almost there!!",
+    "gah dont leave almost done..",
     "loading assets so we dont have any issues later~"
   ];
 
   useEffect(() => {
-    // Rotate messages every 2 seconds
     const messageInterval = setInterval(() => {
       setMessageIndex((prev) => (prev + 1) % messages.length);
     }, 2000);
@@ -24,7 +23,6 @@ function LoadingScreen({ onLoadComplete }) {
     const loadAssets = async () => {
       const isMobile = window.innerWidth < 768;
       
-      // Mobile: Only essential assets for quick load
       const mobileAssets = [
         '/corkboard/corkboard.jpg',
         '/corkboard/boardpin.png',
@@ -49,14 +47,11 @@ function LoadingScreen({ onLoadComplete }) {
         '/corkboard/buttons/X.png'
       ];
       
-      // Desktop: Load everything for smooth experience
       const desktopAssets = [
         '/corkboard/corkboard.jpg',
         '/corkboard/boardpin.png',
         '/corkboard/boardpin2.png',
-        // Polaroids
         ...Array.from({ length: 10 }, (_, i) => `/corkboard/polaroids/${i + 1}.png`),
-        // Stickers
         '/corkboard/sticker1.png', '/corkboard/sticker2.png', '/corkboard/sticker3.png',
         '/corkboard/sticker4.png', '/corkboard/sticker5.png', '/corkboard/sticker6.png',
         '/corkboard/sticker7.png', '/corkboard/sticker8.png', '/corkboard/sticker9.png',
@@ -69,7 +64,6 @@ function LoadingScreen({ onLoadComplete }) {
         '/corkboard/sticker28.png', '/corkboard/sticker29.png', '/corkboard/sticker30.png',
         '/corkboard/sticker31.jpg', '/corkboard/sticker32.jpg', '/corkboard/sticker33.jpg',
         '/corkboard/sticker34.jpg', '/corkboard/sticker35.jpg', '/corkboard/sticker36.jpg',
-        // All Buttons
         '/corkboard/buttons/PANEL_SMOL.png', '/corkboard/buttons/PANEL_LONG.png',
         '/corkboard/buttons/PANEL_LONG2.png', '/corkboard/buttons/SCROLL.png',
         '/corkboard/buttons/HAMBURGER_BTN.png', '/corkboard/buttons/SAVELOAD_BTN.png',
@@ -87,7 +81,6 @@ function LoadingScreen({ onLoadComplete }) {
         '/corkboard/buttons/BIG_BTN.png', '/corkboard/buttons/SAVEFIRST2_BTN.png',
         '/corkboard/buttons/CANCEL2_BTN.png', '/corkboard/buttons/UNMUTE_BTN.png',
         '/corkboard/buttons/MUTE_BTN.png', '/corkboard/buttons/SHARE_BTN.png',
-        // Audio files
         '/corkboard/audio/click.mp3',
         '/corkboard/audio/paper.mp3',
         '/corkboard/audio/music.mp3'
@@ -99,7 +92,6 @@ function LoadingScreen({ onLoadComplete }) {
 
       const loadPromises = assetsToLoad.map((src) => {
         return new Promise((resolve) => {
-          // Check if it's an audio file
           const isAudio = src.endsWith('.mp3') || src.endsWith('.wav') || src.endsWith('.ogg');
           
           if (isAudio) {
@@ -152,10 +144,8 @@ function LoadingScreen({ onLoadComplete }) {
               handleLoad();
             };
             
-            // Force immediate load
             img.src = src;
             
-            // Force browser to decode image immediately (desktop only)
             if (!isMobile && img.decode) {
               img.decode().catch(() => {});
             }
@@ -167,8 +157,6 @@ function LoadingScreen({ onLoadComplete }) {
 
       setLoadingProgress(100);
       
-      // Desktop: Wait extra time to ensure browser fully caches everything
-      // Mobile: quick transition
       setTimeout(() => {
         onLoadComplete();
       }, isMobile ? 300 : 2000);
@@ -193,7 +181,7 @@ function LoadingScreen({ onLoadComplete }) {
         zIndex: 9999
       }}
     >
-      {/* Spinner with bars */}
+
       <div style={{
         position: 'relative',
         width: '60px',
@@ -220,12 +208,11 @@ function LoadingScreen({ onLoadComplete }) {
         ))}
       </div>
 
-      {/* Loading text with panel background */}
       <div style={{
         position: 'relative',
         display: 'inline-block'
       }}>
-        {/* Panel image behind text */}
+        
         <img 
           src="/corkboard/buttons/BIG_BTN.png"
           alt=""
@@ -240,7 +227,7 @@ function LoadingScreen({ onLoadComplete }) {
           }}
         />
         
-        {/* Text on top */}
+        
         <p style={{
           position: 'relative',
           zIndex: 1,
@@ -256,7 +243,6 @@ function LoadingScreen({ onLoadComplete }) {
         </p>
       </div>
 
-      {/* CSS Animation */}
       <style>{`
         @keyframes fade {
           0%, 39%, 100% { opacity: 0.2; }
