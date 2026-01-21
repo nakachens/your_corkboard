@@ -60,7 +60,7 @@ function CorkboardApp({ isFullscreen = true }) {
   const shouldShowHamburger = !isFullscreen;
   
   // assets preloader kinda
-  useEffect(() => {
+  /* useEffect(() => {
     const ensureAssetsLoaded = () => {
       //polaroids
       const polaroidUrls = Array.from({ length: 9 }, (_, i) => `/corkboard/polaroids/${i + 1}.png`);
@@ -91,8 +91,7 @@ function CorkboardApp({ isFullscreen = true }) {
     };
 
     ensureAssetsLoaded();
-  }, []);
-
+  }, []); */
   useEffect(() => {
     const handleStorageChange = () => {
       setSavedProjectsCache(getSavedProjects());

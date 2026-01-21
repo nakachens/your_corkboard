@@ -1,7 +1,7 @@
-/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
 
 function LoadingScreen({ onLoadComplete }) {
+  // eslint-disable-next-line no-unused-vars
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [messageIndex, setMessageIndex] = useState(0);
 
@@ -12,7 +12,6 @@ function LoadingScreen({ onLoadComplete }) {
   ];
 
   useEffect(() => {
-    // Rotate messages every 2 seconds
     const messageInterval = setInterval(() => {
       setMessageIndex((prev) => (prev + 1) % messages.length);
     }, 2000);
@@ -41,14 +40,14 @@ function LoadingScreen({ onLoadComplete }) {
         '/corkboard/buttons/SETTINGS_BTN.png'
       ];
       
-      // Desktop: Load everything for smooth experience
+      // desktop all loading
       const desktopAssets = [
         '/corkboard/corkboard.jpg',
         '/corkboard/boardpin.png',
         '/corkboard/boardpin2.png',
-        // Polaroids
+        // polaroids
         ...Array.from({ length: 10 }, (_, i) => `/corkboard/polaroids/${i + 1}.png`),
-        // Stickers
+        // stickers
         '/corkboard/sticker1.png', '/corkboard/sticker2.png', '/corkboard/sticker3.png',
         '/corkboard/sticker4.png', '/corkboard/sticker5.png', '/corkboard/sticker6.png',
         '/corkboard/sticker7.png', '/corkboard/sticker8.png', '/corkboard/sticker9.png',
@@ -61,7 +60,7 @@ function LoadingScreen({ onLoadComplete }) {
         '/corkboard/sticker28.png', '/corkboard/sticker29.png', '/corkboard/sticker30.png',
         '/corkboard/sticker31.jpg', '/corkboard/sticker32.jpg', '/corkboard/sticker33.jpg',
         '/corkboard/sticker34.jpg', '/corkboard/sticker35.jpg', '/corkboard/sticker36.jpg',
-        // All Buttons
+        // btns
         '/corkboard/buttons/PANEL_SMOL.png', '/corkboard/buttons/PANEL_LONG.png',
         '/corkboard/buttons/PANEL_LONG2.png', '/corkboard/buttons/SCROLL.png',
         '/corkboard/buttons/HAMBURGER_BTN.png', '/corkboard/buttons/SAVELOAD_BTN.png',
@@ -96,7 +95,7 @@ function LoadingScreen({ onLoadComplete }) {
             resolve();
           };
           
-          // Timeout: 3s for mobile, 5s for desktop
+          // mobile timeout
           const timeout = setTimeout(() => {
             handleLoad();
           }, isMobile ? 3000 : 5000);
@@ -119,9 +118,10 @@ function LoadingScreen({ onLoadComplete }) {
 
       setLoadingProgress(100);
       
+      
       setTimeout(() => {
         onLoadComplete();
-      }, 300);
+      }, isMobile ? 300 : 1000);
     };
 
     loadAssets();
@@ -143,7 +143,7 @@ function LoadingScreen({ onLoadComplete }) {
         zIndex: 9999
       }}
     >
-      {/* Spinner with bars */}
+      {/* spinner*/}
       <div style={{
         position: 'relative',
         width: '60px',
@@ -170,12 +170,11 @@ function LoadingScreen({ onLoadComplete }) {
         ))}
       </div>
 
-      {/* Loading text with panel background */}
+      {/* text loading */}
       <div style={{
         position: 'relative',
         display: 'inline-block'
       }}>
-        {/* Panel image behind text */}
         <img 
           src="/corkboard/buttons/BIG_BTN.png"
           alt=""
@@ -189,8 +188,7 @@ function LoadingScreen({ onLoadComplete }) {
             zIndex: 0
           }}
         />
-        
-        {/* Text on top */}
+      
         <p style={{
           position: 'relative',
           zIndex: 1,
@@ -206,7 +204,6 @@ function LoadingScreen({ onLoadComplete }) {
         </p>
       </div>
 
-      {/* CSS Animation */}
       <style>{`
         @keyframes fade {
           0%, 39%, 100% { opacity: 0.2; }
