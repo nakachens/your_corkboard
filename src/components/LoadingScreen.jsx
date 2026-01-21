@@ -6,12 +6,13 @@ function LoadingScreen({ onLoadComplete }) {
   const [messageIndex, setMessageIndex] = useState(0);
 
   const messages = [
-    "pleasee waaitt almost there!!",
+    "pleasee waaitt almost there",
     "gah dont leave almost done",
     "loading assets so we dont have any issues later~"
   ];
 
   useEffect(() => {
+    // Rotate messages every 2 seconds
     const messageInterval = setInterval(() => {
       setMessageIndex((prev) => (prev + 1) % messages.length);
     }, 2000);
@@ -29,6 +30,9 @@ function LoadingScreen({ onLoadComplete }) {
         '/corkboard/boardpin.png',
         '/corkboard/boardpin2.png',
         '/corkboard/buttons/PANEL_SMOL.png',
+        '/corkboard/buttons/PANEL_LONG.png',
+        '/corkboard/buttons/PANEL_LONG2.png',
+        '/corkboard/buttons/SCROLL.png',
         '/corkboard/buttons/HAMBURGER_BTN.png',
         '/corkboard/buttons/SAVELOAD_BTN.png',
         '/corkboard/buttons/NEWBOARD_BTN.png',
@@ -37,17 +41,22 @@ function LoadingScreen({ onLoadComplete }) {
         '/corkboard/buttons/UPLOAD_BTN.png',
         '/corkboard/buttons/STICKYNOTE_BTN.png',
         '/corkboard/buttons/EXPORT_BTN.png',
-        '/corkboard/buttons/SETTINGS_BTN.png'
+        '/corkboard/buttons/SETTINGS_BTN.png',
+        '/corkboard/buttons/CLOSE_BTN.png',
+        '/corkboard/buttons/SHARE_BTN.png',
+        '/corkboard/buttons/YES_BTN.png',
+        '/corkboard/buttons/NO_BTN.png',
+        '/corkboard/buttons/X.png'
       ];
       
-      // desktop all loading
+      // Desktop: Load everything for smooth experience
       const desktopAssets = [
         '/corkboard/corkboard.jpg',
         '/corkboard/boardpin.png',
         '/corkboard/boardpin2.png',
-        // polaroids
+        // Polaroids
         ...Array.from({ length: 10 }, (_, i) => `/corkboard/polaroids/${i + 1}.png`),
-        // stickers
+        // Stickers
         '/corkboard/sticker1.png', '/corkboard/sticker2.png', '/corkboard/sticker3.png',
         '/corkboard/sticker4.png', '/corkboard/sticker5.png', '/corkboard/sticker6.png',
         '/corkboard/sticker7.png', '/corkboard/sticker8.png', '/corkboard/sticker9.png',
@@ -60,7 +69,7 @@ function LoadingScreen({ onLoadComplete }) {
         '/corkboard/sticker28.png', '/corkboard/sticker29.png', '/corkboard/sticker30.png',
         '/corkboard/sticker31.jpg', '/corkboard/sticker32.jpg', '/corkboard/sticker33.jpg',
         '/corkboard/sticker34.jpg', '/corkboard/sticker35.jpg', '/corkboard/sticker36.jpg',
-        // btns
+        // All Buttons
         '/corkboard/buttons/PANEL_SMOL.png', '/corkboard/buttons/PANEL_LONG.png',
         '/corkboard/buttons/PANEL_LONG2.png', '/corkboard/buttons/SCROLL.png',
         '/corkboard/buttons/HAMBURGER_BTN.png', '/corkboard/buttons/SAVELOAD_BTN.png',
@@ -77,7 +86,11 @@ function LoadingScreen({ onLoadComplete }) {
         '/corkboard/buttons/DELETE_BTN.png', '/corkboard/buttons/X.png',
         '/corkboard/buttons/BIG_BTN.png', '/corkboard/buttons/SAVEFIRST2_BTN.png',
         '/corkboard/buttons/CANCEL2_BTN.png', '/corkboard/buttons/UNMUTE_BTN.png',
-        '/corkboard/buttons/MUTE_BTN.png', '/corkboard/buttons/SHARE_BTN.png'
+        '/corkboard/buttons/MUTE_BTN.png', '/corkboard/buttons/SHARE_BTN.png',
+        // Audio files
+        '/corkboard/audio/click.mp3',
+        '/corkboard/audio/paper.mp3',
+        '/corkboard/audio/music.mp3'
       ];
 
       const assetsToLoad = isMobile ? mobileAssets : desktopAssets;
@@ -86,31 +99,61 @@ function LoadingScreen({ onLoadComplete }) {
 
       const loadPromises = assetsToLoad.map((src) => {
         return new Promise((resolve) => {
-          const img = new Image();
+          // Check if it's an audio file
+          const isAudio = src.endsWith('.mp3') || src.endsWith('.wav') || src.endsWith('.ogg');
           
-          const handleLoad = () => {
-            loadedCount++;
-            const progress = Math.round((loadedCount / totalAssets) * 100);
-            setLoadingProgress(progress);
-            resolve();
-          };
-          
-          // mobile timeout
-          const timeout = setTimeout(() => {
-            handleLoad();
-          }, isMobile ? 3000 : 5000);
-          
-          img.onload = () => {
-            clearTimeout(timeout);
-            handleLoad();
-          };
-          
-          img.onerror = () => {
-            clearTimeout(timeout);
-            handleLoad();
-          };
-          
-          img.src = src;
+          if (isAudio) {
+            const audio = new Audio();
+            
+            const handleLoad = () => {
+              loadedCount++;
+              const progress = Math.round((loadedCount / totalAssets) * 100);
+              setLoadingProgress(progress);
+              resolve();
+            };
+            
+            const timeout = setTimeout(() => {
+              handleLoad();
+            }, isMobile ? 2000 : 4000);
+            
+            audio.oncanplaythrough = () => {
+              clearTimeout(timeout);
+              handleLoad();
+            };
+            
+            audio.onerror = () => {
+              clearTimeout(timeout);
+              handleLoad();
+            };
+            
+            audio.preload = 'auto';
+            audio.src = src;
+          } else {
+            const img = new Image();
+            
+            const handleLoad = () => {
+              loadedCount++;
+              const progress = Math.round((loadedCount / totalAssets) * 100);
+              setLoadingProgress(progress);
+              resolve();
+            };
+            
+            const timeout = setTimeout(() => {
+              handleLoad();
+            }, isMobile ? 2000 : 4000);
+            
+            img.onload = () => {
+              clearTimeout(timeout);
+              handleLoad();
+            };
+            
+            img.onerror = () => {
+              clearTimeout(timeout);
+              handleLoad();
+            };
+            
+            img.src = src;
+          }
         });
       });
 
@@ -118,7 +161,8 @@ function LoadingScreen({ onLoadComplete }) {
 
       setLoadingProgress(100);
       
-      
+      // Desktop: wait longer to ensure assets are fully cached
+      // Mobile: quick transition
       setTimeout(() => {
         onLoadComplete();
       }, isMobile ? 300 : 1000);
@@ -143,7 +187,7 @@ function LoadingScreen({ onLoadComplete }) {
         zIndex: 9999
       }}
     >
-      {/* spinner*/}
+      {/* Spinner with bars */}
       <div style={{
         position: 'relative',
         width: '60px',
@@ -170,11 +214,12 @@ function LoadingScreen({ onLoadComplete }) {
         ))}
       </div>
 
-      {/* text loading */}
+      {/* Loading text with panel background */}
       <div style={{
         position: 'relative',
         display: 'inline-block'
       }}>
+        {/* Panel image behind text */}
         <img 
           src="/corkboard/buttons/BIG_BTN.png"
           alt=""
@@ -188,7 +233,8 @@ function LoadingScreen({ onLoadComplete }) {
             zIndex: 0
           }}
         />
-      
+        
+        {/* Text on top */}
         <p style={{
           position: 'relative',
           zIndex: 1,
@@ -204,6 +250,7 @@ function LoadingScreen({ onLoadComplete }) {
         </p>
       </div>
 
+      {/* CSS Animation */}
       <style>{`
         @keyframes fade {
           0%, 39%, 100% { opacity: 0.2; }
