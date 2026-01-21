@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/purity */
 /* eslint-disable no-undef */
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ContextMenu from './ContextMenu';
 import DeleteConfirmation from '../popups/DeleteConfirmation';
 
@@ -32,6 +33,11 @@ function InteractiveItem({
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
+  // Touch-specific states
+  const [lastTap, setLastTap] = useState(0);
+  const touchStartRef = useRef(null);
+  const itemRef = useRef(null);
 
   useEffect(() => {
     setPosition(initialPosition);
@@ -45,6 +51,7 @@ function InteractiveItem({
     setRotation(initialRotation);
   }, [initialRotation]);
 
+  // MOUSE HANDLERS
   const handleMouseDown = (e) => {
     if (e.target.classList.contains('control-handle') || e.target.tagName === 'TEXTAREA') {
       return;
@@ -60,39 +67,82 @@ function InteractiveItem({
   };
 
   const handleRightClick = (e) => {
-  e.preventDefault();
-  
-  const corkboardRect = e.currentTarget.closest('[ref="corkboardRef"]')?.getBoundingClientRect() || 
-                        e.currentTarget.offsetParent?.getBoundingClientRect();
+    e.preventDefault();
+    showContextMenuAt(e.clientX, e.clientY);
+  };
 
-  const menuWidth = 150;
-  const menuHeight = 160; 
-  
-  let menuX = e.clientX;
-  let menuY = e.clientY;
-  
-  if (corkboardRect) {
-    menuX = e.clientX - corkboardRect.left;
-    menuY = e.clientY - corkboardRect.top;
+  // TOUCH HANDLERS
+  const handleTouchStart = (e) => {
+    // Ignore if touching a control handle or textarea
+    if (e.target.classList.contains('control-handle') || e.target.tagName === 'TEXTAREA') {
+      return;
+    }
+
+    const touch = e.touches[0];
+    touchStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      time: Date.now()
+    };
+
+    // Double tap detection for context menu
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
     
-    if (menuX + menuWidth > corkboardRect.width) {
-      menuX = corkboardRect.width - menuWidth - 10;
+    if (now - lastTap < DOUBLE_TAP_DELAY) {
+      // Double tap detected - show context menu
+      e.preventDefault();
+      showContextMenuAt(touch.clientX, touch.clientY);
+      setLastTap(0);
+      return;
     }
     
-    if (menuY + menuHeight > corkboardRect.height) {
-      menuY = corkboardRect.height - menuHeight - 10;
-    }
-    
-    menuX = Math.max(10, menuX);
-    menuY = Math.max(10, menuY);
-  }
-  
-  setContextMenuPosition({ x: menuX, y: menuY });
-  setShowContextMenu(true);
-  setIsSelected(true);
-};
+    setLastTap(now);
 
+    // Start dragging
+    setIsDragging(true);
+    setIsSelected(true);
+    setDragOffset({
+      x: touch.clientX - position.x,
+      y: touch.clientY - position.y
+    });
+    
+    e.stopPropagation();
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging && !isResizing && !isRotating) return;
+
+    const touch = e.touches[0];
+    
+    if (isDragging) {
+      e.preventDefault();
+      const newPosition = {
+        x: touch.clientX - dragOffset.x,
+        y: touch.clientY - dragOffset.y
+      };
+      setPosition(newPosition);
+      if (onPositionChange) onPositionChange(newPosition);
+    } else if (isResizing) {
+      e.preventDefault();
+      handleResizeMove(touch.clientX, touch.clientY);
+    } else if (isRotating) {
+      e.preventDefault();
+      handleRotateMove(touch.clientX, touch.clientY);
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    setIsDragging(false);
+    setIsResizing(false);
+    setIsRotating(false);
+    touchStartRef.current = null;
+  };
+
+  // RESIZE HANDLERS
   const handleResizeMouseDown = (e, corner) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsResizing(true);
     setResizeStart({
       x: e.clientX,
@@ -103,14 +153,118 @@ function InteractiveItem({
       posY: position.y,
       corner: corner
     });
-    e.stopPropagation();
   };
 
+  const handleResizeTouchStart = (e, corner) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const touch = e.touches[0];
+    setIsResizing(true);
+    setResizeStart({
+      x: touch.clientX,
+      y: touch.clientY,
+      width: size.width,
+      height: size.height,
+      posX: position.x,
+      posY: position.y,
+      corner: corner
+    });
+  };
+
+  const handleResizeMove = (clientX, clientY) => {
+    const deltaX = clientX - resizeStart.x;
+    const deltaY = clientY - resizeStart.y;
+    
+    let newWidth = size.width;
+    let newHeight = size.height;
+    let newX = position.x;
+    let newY = position.y;
+
+    switch(resizeStart.corner) {
+      case 'se':
+        newWidth = Math.max(50, resizeStart.width + deltaX);
+        newHeight = Math.max(50, resizeStart.height + deltaY);
+        break;
+      case 'sw':
+        newWidth = Math.max(50, resizeStart.width - deltaX);
+        newHeight = Math.max(50, resizeStart.height + deltaY);
+        if (newWidth >= 50) newX = resizeStart.posX + deltaX;
+        break;
+      case 'ne':
+        newWidth = Math.max(50, resizeStart.width + deltaX);
+        newHeight = Math.max(50, resizeStart.height - deltaY);
+        if (newHeight >= 50) newY = resizeStart.posY + deltaY;
+        break;
+      case 'nw':
+        newWidth = Math.max(50, resizeStart.width - deltaX);
+        newHeight = Math.max(50, resizeStart.height - deltaY);
+        if (newWidth >= 50) newX = resizeStart.posX + deltaX;
+        if (newHeight >= 50) newY = resizeStart.posY + deltaY;
+        break;
+    }
+
+    const newSize = { width: newWidth, height: newHeight };
+    const newPos = { x: newX, y: newY };
+    setSize(newSize);
+    setPosition(newPos);
+    if (onSizeChange) onSizeChange(newSize);
+    if (onPositionChange) onPositionChange(newPos);
+  };
+
+  // ROTATE HANDLERS
   const handleRotateMouseDown = (e) => {
-    setIsRotating(true);
     e.stopPropagation();
+    e.preventDefault();
+    setIsRotating(true);
   };
 
+  const handleRotateTouchStart = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsRotating(true);
+  };
+
+  const handleRotateMove = (clientX, clientY) => {
+    const centerX = position.x + size.width / 2;
+    const centerY = position.y + size.height / 2;
+    const angle = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI) + 90;
+    setRotation(angle);
+    if (onRotationChange) onRotationChange(angle);
+  };
+
+  // Context menu helper
+  const showContextMenuAt = (clientX, clientY) => {
+    const corkboardRect = itemRef.current?.closest('[ref="corkboardRef"]')?.getBoundingClientRect() || 
+                          itemRef.current?.offsetParent?.getBoundingClientRect();
+
+    const menuWidth = 150;
+    const menuHeight = 160;
+    
+    let menuX = clientX;
+    let menuY = clientY;
+    
+    if (corkboardRect) {
+      menuX = clientX - corkboardRect.left;
+      menuY = clientY - corkboardRect.top;
+      
+      if (menuX + menuWidth > corkboardRect.width) {
+        menuX = corkboardRect.width - menuWidth - 10;
+      }
+      
+      if (menuY + menuHeight > corkboardRect.height) {
+        menuY = corkboardRect.height - menuHeight - 10;
+      }
+      
+      menuX = Math.max(10, menuX);
+      menuY = Math.max(10, menuY);
+    }
+    
+    setContextMenuPosition({ x: menuX, y: menuY });
+    setShowContextMenu(true);
+    setIsSelected(true);
+  };
+
+  // MOUSE MOVE AND UP LISTENERS
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (isDragging) {
@@ -121,49 +275,9 @@ function InteractiveItem({
         setPosition(newPosition);
         if (onPositionChange) onPositionChange(newPosition);
       } else if (isResizing) {
-        const deltaX = e.clientX - resizeStart.x;
-        const deltaY = e.clientY - resizeStart.y;
-        
-        let newWidth = size.width;
-        let newHeight = size.height;
-        let newX = position.x;
-        let newY = position.y;
-
-        switch(resizeStart.corner) {
-          case 'se':
-            newWidth = Math.max(50, resizeStart.width + deltaX);
-            newHeight = Math.max(50, resizeStart.height + deltaY);
-            break;
-          case 'sw':
-            newWidth = Math.max(50, resizeStart.width - deltaX);
-            newHeight = Math.max(50, resizeStart.height + deltaY);
-            if (newWidth >= 50) newX = resizeStart.posX + deltaX;
-            break;
-          case 'ne':
-            newWidth = Math.max(50, resizeStart.width + deltaX);
-            newHeight = Math.max(50, resizeStart.height - deltaY);
-            if (newHeight >= 50) newY = resizeStart.posY + deltaY;
-            break;
-          case 'nw':
-            newWidth = Math.max(50, resizeStart.width - deltaX);
-            newHeight = Math.max(50, resizeStart.height - deltaY);
-            if (newWidth >= 50) newX = resizeStart.posX + deltaX;
-            if (newHeight >= 50) newY = resizeStart.posY + deltaY;
-            break;
-        }
-
-        const newSize = { width: newWidth, height: newHeight };
-        const newPos = { x: newX, y: newY };
-        setSize(newSize);
-        setPosition(newPos);
-        if (onSizeChange) onSizeChange(newSize);
-        if (onPositionChange) onPositionChange(newPos);
+        handleResizeMove(e.clientX, e.clientY);
       } else if (isRotating) {
-        const centerX = position.x + size.width / 2;
-        const centerY = position.y + size.height / 2;
-        const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI) + 90;
-        setRotation(angle);
-        if (onRotationChange) onRotationChange(angle);
+        handleRotateMove(e.clientX, e.clientY);
       }
     };
 
@@ -180,17 +294,30 @@ function InteractiveItem({
       }
     };
 
+    const handleTouchOutside = (e) => {
+      if (!e.target.closest('.interactive-item') && !e.target.closest('.context-menu')) {
+        setIsSelected(false);
+        setShowContextMenu(false);
+      }
+    };
+
     if (isDragging || isResizing || isRotating) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
     }
 
     document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleTouchOutside);
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleTouchOutside);
     };
   }, [isDragging, isResizing, isRotating, dragOffset, position, size, resizeStart, onPositionChange, onSizeChange, onRotationChange]);
 
@@ -231,6 +358,7 @@ function InteractiveItem({
   return (
     <>
       <div
+        ref={itemRef}
         className="interactive-item"
         style={{
           position: 'absolute',
@@ -243,32 +371,36 @@ function InteractiveItem({
           zIndex: zIndex || 10,
           userSelect: 'none',
           outline: isSelected ? '2px solid #2196F3' : 'none',
-          outlineOffset: '2px'
+          outlineOffset: '2px',
+          touchAction: 'none'
         }}
         onMouseDown={handleMouseDown}
         onContextMenu={handleRightClick}
+        onTouchStart={handleTouchStart}
       >
         {children}
         
-        {/* SELECTION EDGES */}
+        {/* SELECTION HANDLES */}
         {isSelected && (
           <>
-            {/* HANDLES */}
+            {/* RESIZE HANDLES */}
             <div
               className="control-handle"
               style={{
                 position: 'absolute',
                 top: '-6px',
                 left: '-6px',
-                width: '12px',
-                height: '12px',
+                width: '20px',
+                height: '20px',
                 background: '#fff',
                 border: '2px solid #2196F3',
                 borderRadius: '2px',
                 cursor: 'nwse-resize',
-                zIndex: 1000
+                zIndex: 1000,
+                touchAction: 'none'
               }}
               onMouseDown={(e) => handleResizeMouseDown(e, 'nw')}
+              onTouchStart={(e) => handleResizeTouchStart(e, 'nw')}
             />
             <div
               className="control-handle"
@@ -276,15 +408,17 @@ function InteractiveItem({
                 position: 'absolute',
                 top: '-6px',
                 right: '-6px',
-                width: '12px',
-                height: '12px',
+                width: '20px',
+                height: '20px',
                 background: '#fff',
                 border: '2px solid #2196F3',
                 borderRadius: '2px',
                 cursor: 'nesw-resize',
-                zIndex: 1000
+                zIndex: 1000,
+                touchAction: 'none'
               }}
               onMouseDown={(e) => handleResizeMouseDown(e, 'ne')}
+              onTouchStart={(e) => handleResizeTouchStart(e, 'ne')}
             />
             <div
               className="control-handle"
@@ -292,15 +426,17 @@ function InteractiveItem({
                 position: 'absolute',
                 bottom: '-6px',
                 left: '-6px',
-                width: '12px',
-                height: '12px',
+                width: '20px',
+                height: '20px',
                 background: '#fff',
                 border: '2px solid #2196F3',
                 borderRadius: '2px',
                 cursor: 'nesw-resize',
-                zIndex: 1000
+                zIndex: 1000,
+                touchAction: 'none'
               }}
               onMouseDown={(e) => handleResizeMouseDown(e, 'sw')}
+              onTouchStart={(e) => handleResizeTouchStart(e, 'sw')}
             />
             <div
               className="control-handle"
@@ -308,39 +444,43 @@ function InteractiveItem({
                 position: 'absolute',
                 bottom: '-6px',
                 right: '-6px',
-                width: '12px',
-                height: '12px',
+                width: '20px',
+                height: '20px',
                 background: '#fff',
                 border: '2px solid #2196F3',
                 borderRadius: '2px',
                 cursor: 'nwse-resize',
-                zIndex: 1000
+                zIndex: 1000,
+                touchAction: 'none'
               }}
               onMouseDown={(e) => handleResizeMouseDown(e, 'se')}
+              onTouchStart={(e) => handleResizeTouchStart(e, 'se')}
             />
             
-            {/* ROTATION BALL THINGY */}
+            {/* ROTATION HANDLE */}
             <div
               className="control-handle"
               style={{
                 position: 'absolute',
-                top: '-30px',
+                top: '-40px',
                 left: '50%',
                 transform: 'translateX(-50%)',
-                width: '16px',
-                height: '16px',
+                width: '24px',
+                height: '24px',
                 background: '#fff',
                 border: '2px solid #2196F3',
                 borderRadius: '50%',
                 cursor: 'crosshair',
-                zIndex: 1000
+                zIndex: 1000,
+                touchAction: 'none'
               }}
               onMouseDown={handleRotateMouseDown}
+              onTouchStart={handleRotateTouchStart}
             >
               <div style={{
                 position: 'absolute',
                 width: '2px',
-                height: '14px',
+                height: '16px',
                 background: '#2196F3',
                 left: '50%',
                 bottom: '100%',
@@ -366,13 +506,13 @@ function InteractiveItem({
       )}
 
       {showDeleteConfirm && (
-  <DeleteConfirmation
-    onConfirm={confirmDelete}
-    onCancel={cancelDelete}
-    confirmImage="/corkboard/buttons/YES_BTN.png"  
-    cancelImage="/corkboard/buttons/NO_BTN.png"    
-  />
-)}
+        <DeleteConfirmation
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
+          confirmImage="/corkboard/buttons/YES_BTN.png"  
+          cancelImage="/corkboard/buttons/NO_BTN.png"    
+        />
+      )}
     </>
   );
 }
